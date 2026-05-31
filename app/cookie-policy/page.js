@@ -1,8 +1,9 @@
-import config from '../../config/site.config.js';
+import config from '../../config/site.config.js'
 
-export const metadata = { title: `Cookie Policy — ${config.siteName}` };
+export const metadata = { title: `Cookie Policy — ${config.siteName}` }
 
 export default function CookiePolicyPage() {
+  const email = `privacy@${config.domain}`
   return (
     <div className="static-page">
       <h1>Cookie Policy</h1>
@@ -21,7 +22,7 @@ export default function CookiePolicyPage() {
       <p>You can control cookies through your browser settings. Most browsers allow you to refuse or delete cookies. Note that disabling cookies may affect website functionality.</p>
       <p>To opt out of Google Analytics, visit <a href="https://tools.google.com/dlpage/gaoptout">Google Analytics Opt-out</a>.</p>
       <h2>Contact</h2>
-      <p>Questions about our cookie use? Email <a href="mailto:privacy@aitoolsindia.in">privacy@aitoolsindia.in</a>.</p>
+      <p>Questions about our cookie use? Email <a href={`mailto:${email}`}>{email}</a>.</p>
     </div>
-  );
+  )
 }

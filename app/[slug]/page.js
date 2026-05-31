@@ -21,13 +21,13 @@ export async function generateMetadata({ params }) {
       authors: [config.author.name],
       section: post.category,
       tags: post.tags || [],
-      images: post.image_url ? [{ url: post.image_url, width: 1200, height: 630 }] : [],
+      images: post.cover_image ? [{ url: post.cover_image, width: 1200, height: 630 }] : [],
     },
     twitter: {
       card: 'summary_large_image',
       title: post.meta_title || post.title,
       description: post.meta_description || post.excerpt,
-      images: post.image_url ? [post.image_url] : [],
+      images: post.cover_image ? [post.cover_image] : [],
     },
   };
 }
@@ -141,7 +141,7 @@ export default async function ArticlePage({ params }) {
     },
     datePublished: post.published_at,
     dateModified: post.updated_at || post.published_at,
-    image: post.image_url ? [post.image_url] : [],
+    image: post.cover_image ? [post.cover_image] : [],
     url: `${config.siteUrl}/${post.slug}`,
     articleSection: post.category,
     keywords: (post.tags || []).join(', '),
@@ -210,9 +210,9 @@ export default async function ArticlePage({ params }) {
         <div className="page-grid" style={{ paddingTop: '32px' }}>
           <div className="main-col">
             {/* Featured image */}
-            {post.image_url && (
+            {post.cover_image && (
               <div className="article-featured-img">
-                <img src={post.image_url} alt={post.title} />
+                <img src={post.cover_image} alt={post.title} />
               </div>
             )}
 

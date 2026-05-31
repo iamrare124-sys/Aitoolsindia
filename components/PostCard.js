@@ -19,8 +19,8 @@ export default function PostCard({ post, featured = false }) {
   return (
     <a href={`/${post.slug}`} className={`post-card${featured ? ' post-card-featured' : ''}`}>
       <div className="post-card-img">
-        {post.image_url ? (
-          <img src={post.image_url} alt={post.title} loading="lazy" />
+        {post.cover_image ? (
+          <img src={post.cover_image} alt={post.title} loading="lazy" />
         ) : (
           <div className="post-card-img-placeholder">🤖</div>
         )}

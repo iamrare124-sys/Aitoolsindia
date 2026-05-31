@@ -1,11 +1,12 @@
-import config from '../../config/site.config.js';
+import config from '../../config/site.config.js'
 
 export const metadata = {
   title: `Privacy Policy — ${config.siteName}`,
   description: `Privacy Policy for ${config.siteName}`,
-};
+}
 
 export default function PrivacyPolicyPage() {
+  const email = `privacy@${config.domain}`
   return (
     <div className="static-page">
       <h1>Privacy Policy</h1>
@@ -35,10 +36,10 @@ export default function PrivacyPolicyPage() {
       <p>We implement appropriate technical and organizational measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction.</p>
 
       <h2>7. Your Rights</h2>
-      <p>You have the right to access, correct, or delete your personal information. Contact us at <a href="mailto:privacy@aitoolsindia.in">privacy@aitoolsindia.in</a> to exercise these rights.</p>
+      <p>You have the right to access, correct, or delete your personal information. Contact us at <a href={`mailto:${email}`}>{email}</a> to exercise these rights.</p>
 
       <h2>8. Contact</h2>
-      <p>For privacy-related queries, contact us at <a href="mailto:privacy@aitoolsindia.in">privacy@aitoolsindia.in</a> or write to us at {config.domain}.</p>
+      <p>For privacy-related queries, contact us at <a href={`mailto:${email}`}>{email}</a> or write to us at {config.domain}.</p>
     </div>
-  );
+  )
 }

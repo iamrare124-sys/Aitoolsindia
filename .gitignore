@@ -1,0 +1,30 @@
+# Environment files — never commit these
+.env
+.env.local
+.env.production
+.env.*.local
+.env.development.local
+.env.test.local
+
+# Vercel
+.vercel
+
+# Next.js
+.next/
+out/
+
+# Dependencies
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp

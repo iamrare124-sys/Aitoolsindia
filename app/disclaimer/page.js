@@ -1,8 +1,9 @@
-import config from '../../config/site.config.js';
+import config from '../../config/site.config.js'
 
-export const metadata = { title: `Disclaimer — ${config.siteName}` };
+export const metadata = { title: `Disclaimer — ${config.siteName}` }
 
 export default function DisclaimerPage() {
+  const email = `hello@${config.domain}`
   return (
     <div className="static-page">
       <h1>Disclaimer</h1>
@@ -14,7 +15,7 @@ export default function DisclaimerPage() {
       <p>Some links on this website may be affiliate links. If you click on an affiliate link and make a purchase, we may earn a commission at no additional cost to you. We only recommend tools and services we genuinely believe are useful.</p>
       <h2>External Links</h2>
       <p>Our site may contain links to other websites. We have no control over the content of those sites and accept no responsibility for them.</p>
-      <p>For questions, contact <a href="mailto:hello@aitoolsindia.in">hello@aitoolsindia.in</a>.</p>
+      <p>For questions, contact <a href={`mailto:${email}`}>{email}</a>.</p>
     </div>
-  );
+  )
 }

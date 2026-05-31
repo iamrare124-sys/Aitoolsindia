@@ -1,43 +1,88 @@
--- AItoolsindia Supabase Schema
--- Run this once in the Supabase SQL Editor
+-- ═══════════════════════════════════════════════════════════════════
+-- AItoolsindia / SyndicateHub — Unified Supabase Schema
+-- Supports 10 sites in one Supabase project via site_name column
+-- Run once in Supabase SQL Editor
+-- ═══════════════════════════════════════════════════════════════════
 
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- ─── POSTS TABLE ─────────────────────────────────────────────────────────────
+-- ─── POSTS TABLE ──────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS posts (
-  id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  slug            TEXT NOT NULL UNIQUE,
-  title           TEXT NOT NULL,
-  meta_title      TEXT,
+  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+  -- Multi-site: every row belongs to one site
+  site_name        TEXT NOT NULL DEFAULT 'aitoolsindia',
+
+  -- Core content
+  slug             TEXT NOT NULL,
+  title            TEXT NOT NULL,
+  excerpt          TEXT,
+  content          JSONB,
+
+  -- Taxonomy
+  category         TEXT NOT NULL DEFAULT 'ai-news',
+  tags             TEXT[] DEFAULT '{}',
+
+  -- Media
+  cover_image      TEXT,
+  cover_image_alt  TEXT,
+
+  -- Author
+  author_name      TEXT,
+  author_title     TEXT,
+
+  -- SEO
+  meta_title       TEXT,
   meta_description TEXT,
-  excerpt         TEXT,
-  content         JSONB,
-  faq             JSONB DEFAULT '[]',
-  tags            TEXT[] DEFAULT '{}',
-  category        TEXT NOT NULL DEFAULT 'ai-news',
-  image_url       TEXT,
-  image_alt       TEXT,
-  reading_time    INTEGER DEFAULT 5,
-  source_url      TEXT,
-  source_title    TEXT,
-  published_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at      TIMESTAMPTZ DEFAULT NOW(),
-  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  schema_json      JSONB,
+
+  -- Extra data
+  live_data        JSONB,
+  faq              JSONB DEFAULT '[]',
+
+  -- Stats
+  reading_time     INT DEFAULT 5,
+  word_count       INT DEFAULT 800,
+  ai_score         INT DEFAULT 7,
+  views            INT DEFAULT 0,
+
+  -- Status
+  published        BOOLEAN DEFAULT true,
+  tweeted          BOOLEAN DEFAULT false,
+
+  -- Source tracking
+  source_url       TEXT,
+  source_headline  TEXT,
+
+  -- Timestamps
+  published_at     TIMESTAMPTZ DEFAULT now(),
+  created_at       TIMESTAMPTZ DEFAULT now(),
+  updated_at       TIMESTAMPTZ DEFAULT now()
 );
 
--- ─── INDEXES ─────────────────────────────────────────────────────────────────
-CREATE INDEX IF NOT EXISTS idx_posts_slug         ON posts (slug);
-CREATE INDEX IF NOT EXISTS idx_posts_category     ON posts (category);
-CREATE INDEX IF NOT EXISTS idx_posts_published_at ON posts (published_at DESC);
-CREATE INDEX IF NOT EXISTS idx_posts_tags         ON posts USING GIN (tags);
-CREATE INDEX IF NOT EXISTS idx_posts_content      ON posts USING GIN (content);
+-- ─── UNIQUE CONSTRAINT ────────────────────────────────────────────
+-- Same slug can exist on different sites — unique per (site_name, slug)
+CREATE UNIQUE INDEX IF NOT EXISTS posts_site_slug_idx ON posts(site_name, slug);
 
--- ─── FULL TEXT SEARCH INDEX ───────────────────────────────────────────────────
-CREATE INDEX IF NOT EXISTS idx_posts_fts ON posts
-  USING GIN (to_tsvector('english', coalesce(title, '') || ' ' || coalesce(excerpt, '')));
+-- ─── PERFORMANCE INDEXES ──────────────────────────────────────────
+CREATE INDEX IF NOT EXISTS posts_site_name_idx  ON posts(site_name);
+CREATE INDEX IF NOT EXISTS posts_category_idx   ON posts(category);
+CREATE INDEX IF NOT EXISTS posts_created_idx    ON posts(created_at DESC);
+CREATE INDEX IF NOT EXISTS posts_published_idx  ON posts(published);
+CREATE INDEX IF NOT EXISTS posts_source_url_idx ON posts(source_url);
+CREATE INDEX IF NOT EXISTS posts_views_idx      ON posts(views DESC);
 
--- ─── UPDATED_AT TRIGGER ───────────────────────────────────────────────────────
+-- Full-text search
+CREATE INDEX IF NOT EXISTS posts_fts_idx ON posts
+  USING GIN (to_tsvector('english',
+    coalesce(title, '') || ' ' || coalesce(excerpt, '')
+  ));
+
+-- Tags GIN index
+CREATE INDEX IF NOT EXISTS posts_tags_idx ON posts USING GIN (tags);
+
+-- ─── UPDATED_AT TRIGGER ───────────────────────────────────────────
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -52,45 +97,42 @@ CREATE TRIGGER set_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
--- ─── ROW LEVEL SECURITY ───────────────────────────────────────────────────────
+-- ─── ROW LEVEL SECURITY ───────────────────────────────────────────
 ALTER TABLE posts ENABLE ROW LEVEL SECURITY;
 
--- Public can read all published posts
-CREATE POLICY "Public can read posts"
-  ON posts FOR SELECT
-  TO anon, authenticated
-  USING (true);
+-- Public: read published posts only
+DROP POLICY IF EXISTS "Public read published" ON posts;
+CREATE POLICY "Public read published" ON posts
+  FOR SELECT
+  USING (published = true);
 
--- Only service role can insert/update/delete
-CREATE POLICY "Service role full access"
-  ON posts FOR ALL
-  TO service_role
-  USING (true)
-  WITH CHECK (true);
+-- Service role: full access (used by cron/admin)
+DROP POLICY IF EXISTS "Service full access" ON posts;
+CREATE POLICY "Service full access" ON posts
+  FOR ALL
+  USING (auth.role() = 'service_role');
 
--- ─── HELPFUL VIEWS ───────────────────────────────────────────────────────────
+-- ─── HELPER VIEWS ─────────────────────────────────────────────────
 
--- Recent posts view (for quick queries)
-CREATE OR REPLACE VIEW recent_posts AS
-  SELECT
-    id, slug, title, excerpt, category, tags, image_url, published_at, reading_time
+-- Per-site post counts
+CREATE OR REPLACE VIEW site_post_counts AS
+  SELECT site_name, COUNT(*) AS total, SUM(views) AS total_views
   FROM posts
-  ORDER BY published_at DESC
-  LIMIT 30;
+  WHERE published = true
+  GROUP BY site_name
+  ORDER BY total DESC;
 
--- Category counts view
-CREATE OR REPLACE VIEW category_counts AS
-  SELECT category, COUNT(*) as post_count
+-- Trending posts across all sites
+CREATE OR REPLACE VIEW global_trending AS
+  SELECT id, site_name, slug, title, category, views, created_at
   FROM posts
-  GROUP BY category
-  ORDER BY post_count DESC;
+  WHERE published = true
+  ORDER BY views DESC
+  LIMIT 50;
 
--- ─── COMMENTS ────────────────────────────────────────────────────────────────
--- To reset the database (careful!):
--- DROP TABLE IF EXISTS posts CASCADE;
-
--- To check post count:
--- SELECT COUNT(*) FROM posts;
-
--- To find posts without excerpts:
--- SELECT id, title FROM posts WHERE excerpt IS NULL OR excerpt = '';
+-- ─── USEFUL QUERIES (comments only) ──────────────────────────────
+-- Check all sites:   SELECT * FROM site_post_counts;
+-- Posts for site:    SELECT slug, title FROM posts WHERE site_name = 'aitoolsindia' ORDER BY created_at DESC LIMIT 10;
+-- Reset views:       UPDATE posts SET views = 0 WHERE site_name = 'aitoolsindia';
+-- Delete all posts:  DELETE FROM posts WHERE site_name = 'aitoolsindia';
+-- Count per site:    SELECT site_name, COUNT(*) FROM posts GROUP BY site_name;

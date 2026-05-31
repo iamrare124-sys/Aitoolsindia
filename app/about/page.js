@@ -1,11 +1,12 @@
-import config from '../../config/site.config.js';
+import config from '../../config/site.config.js'
 
 export const metadata = {
   title: `About — ${config.siteName}`,
   description: `Learn about ${config.siteName} and our mission to help Indian professionals leverage AI tools.`,
-};
+}
 
 export default function AboutPage() {
+  const email = `hello@${config.domain}`
   return (
     <div className="container">
       <div className="about-hero">
@@ -33,7 +34,7 @@ export default function AboutPage() {
         </div>
 
         <p>
-          <strong style={{ color: 'var(--text-primary)' }}>AItoolsindia.in</strong> is India&apos;s go-to resource for AI tools, ChatGPT guides, and practical tech advice for professionals across the country.
+          <strong style={{ color: 'var(--text-primary)' }}>{config.siteName}</strong> is India&apos;s go-to resource for AI tools, ChatGPT guides, and practical tech advice for professionals across the country.
         </p>
         <p>
           We believe every Indian professional — whether you&apos;re a CA in Mumbai, a teacher in Pune, or a freelancer from Hyderabad — deserves to know how AI can boost their career and income. No jargon, no fluff.
@@ -59,9 +60,9 @@ export default function AboutPage() {
 
         <p>
           Have a question or want to collaborate? Reach us at{' '}
-          <a href="mailto:hello@aitoolsindia.in" style={{ color: 'var(--accent)' }}>hello@aitoolsindia.in</a>
+          <a href={`mailto:${email}`} style={{ color: 'var(--accent)' }}>{email}</a>
         </p>
       </div>
     </div>
-  );
+  )
 }

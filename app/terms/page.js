@@ -1,10 +1,11 @@
-import config from '../../config/site.config.js';
+import config from '../../config/site.config.js'
 
 export const metadata = {
   title: `Terms of Use — ${config.siteName}`,
-};
+}
 
 export default function TermsPage() {
+  const email = `legal@${config.domain}`
   return (
     <div className="static-page">
       <h1>Terms of Use</h1>
@@ -35,7 +36,7 @@ export default function TermsPage() {
       <p>These terms are governed by the laws of India. Any disputes shall be subject to the jurisdiction of Indian courts.</p>
 
       <h2>9. Contact</h2>
-      <p>Questions about these terms? Email us at <a href="mailto:legal@aitoolsindia.in">legal@aitoolsindia.in</a>.</p>
+      <p>Questions about these terms? Email us at <a href={`mailto:${email}`}>{email}</a>.</p>
     </div>
-  );
+  )
 }
